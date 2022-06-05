@@ -1,0 +1,144 @@
+#|-----------------------------------------------------------------------------------|#
+
+## DISEÑO Y ESTRUCTURA DE LA BASE DE DATOS -- [PeritControl]
+## DESIGN AND STRUCTURE OF THE DATABASE -- [PeritControl]
+
+Name: db025_pc_accident_mod01.sql
+Description: Custom designed database for a company 
+                focused on accident management.
+
+#|-----------------------------------------------------------------------------------|#
+
+## TABLAS - TABLES
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO CLIENTES - MODULE CLIENTS ##
+
+[client]
+    codClient       [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nifCli          [VARCHAR(20) UNIQUE, NOT NULL]
+    nameCli         [VARCHAR(255) NOT NULL]
+    emailCli        [VARCHAR(255) NOT NULL]
+    contactCli      [VARCHAR(255) DEFAULT=NULL]
+    commentsCli     [VARCHAR(500) DEFAULT=NULL]
+    statusCli       [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[client_type]
+    codTypeCli      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    clientType      [VARCHAR(255) NOT NULL]    
+
+[client_phone]
+    codPhoneCli     [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codPrefixPhone  [SMALLINT(3) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    phone           [INT(13) NOT NULL, UNIQUE, UNSIGNED]
+
+[phone_prefix]
+    codPrefixPhone  [SMALLINT(3) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]    
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    prefixPhone     [SMALLINT(3), NOT NULL, UNSIGNED, UNIQUE]
+
+[client_address]
+    codAddressCli   [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codTypeAdd      [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    address         [VARCHAR(255) NOT NULL]
+    numberAdd       [SMALLINT(5) UNSIGNED, DEFAULT=NULL]
+    codStateAdd     [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codProvinceAdd  [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    zipCode         [INT(8) UNSIGNED, DEFAULT=NULL]
+
+[address_type]
+    codTypeAdd      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    addressType     [VARCHAR(255) NOT NULL]
+
+[address_state]
+    codStateAdd     [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    state           [VARCHAR(255) NOT NULL]
+    codProvinceAdd  [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+
+[address_province]
+    codProvinceAdd  [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    province        [VARCHAR(255) NOT NULL]
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+
+[address_country]
+    codCountryAdd   [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    country         [VARCHAR(255) NOT NULL]
+
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO EMPLEADOS - MODULE EMPLOYEES ##
+
+[employed]
+    codEmployed     [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nifEmp          [VARCHAR(20) UNIQUE, NOT NULL]
+    nameEmp         [VARCHAR(255) NOT NULL]
+    emailEmp        [VARCHAR(255) NOT NULL]
+    contactEmp      [VARCHAR(255) DEFAULT=NULL]
+    commentsEmp     [VARCHAR(500) DEFAULT=NULL]
+    statusEmp       [TINYINT(1) NOT NULL, DEFAULT=1]
+    registEmp       [INT(8) UNSIGNED, NOT NULL, DEFAULT=0]
+
+[employed_type]
+    codTypeEmp      [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    employedType    [VARCHAR(255) NOT NULL] 
+
+[employed_profix]
+    codProfitEmp    [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codEmployed     [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    numRegist       [SMALLINT(4) NOT NULL, UNSIGNED]
+    monthProfit     [SMALLINT(2) NOT NULL, UNSIGNED]
+    yearProfit      [SMALLINT(4) NOT NULL, UNSIGNED]
+    amountProfit    [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO COMPAÑIAS - MODULE COMPANIES ##
+
+[company]
+    codCompany      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nameCom         [VARCHAR(255) NOT NULL]
+    statusCom       [TINYINT(1) NOT NULL, DEFAULT=1]
+    registCom       [INT(8) UNSIGNED, NOT NULL, DEFAULT=0]
+    totalProfitCom  [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+[company_branch]
+    codBranchCom    [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codCompany      [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    nameBranch      [VARCHAR(255) NOT NULL]
+    statusBranch    [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[company_profix]
+    codProfitCom    [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codCompany      [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    numRegist       [SMALLINT(4) NOT NULL, UNSIGNED]
+    monthProfit     [SMALLINT(2) NOT NULL, UNSIGNED]
+    yearProfit      [SMALLINT(4) NOT NULL, UNSIGNED]
+    amountProfit    [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO ACCIDENTES - MODULE ACCIDENTS ##
+
+[accident]
+    codAccident     [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codCompany      [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codBranchCom    [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    codTypeAcc      [SMALLINT(4) NOT NULL, UNIQUE, UNSIGNED, FOREING KEY]
+    numPolicy       [VARCHAR(100) NOT NULL]
+    dateAccident    [DATE, DEFAULT=NULL]
+
+[accident_type]
+    codTypeAcc      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    descripTypeAcc  [VARCHAR(255) NOT NULL]
+    statusTypeAcc   [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[accident_intervention]
+    codAccInterAcc  [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    descripInter    [VARCHAR(255) NOT NULL]
+    statusInter     [TINYINT(1) NOT NULL, DEFAULT=1]
