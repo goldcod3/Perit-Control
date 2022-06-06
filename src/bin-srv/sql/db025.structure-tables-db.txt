@@ -1,0 +1,228 @@
+#|-----------------------------------------------------------------------------------|#
+
+## ESTRUCTURA DE LA BASE DE DATOS -- [PeritControl]
+## STRUCTURE OF THE DATABASE -- [PeritControl]
+
+Name: db025_pc_accident_mod01.sql
+Description: Custom designed database for a company focused on accident management.
+
+#|-----------------------------------------------------------------------------------|#
+
+## TABLAS - TABLES
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO CLIENTES - MODULE CLIENTS ##
+
+[client_type]
+    codTypeCli      [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    clientType      [VARCHAR(255) NOT NULL]    
+
+[client]
+    codClient       [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nifCli          [VARCHAR(20) NOT NULL]
+    nameCli         [VARCHAR(255) NOT NULL]
+    emailCli        [VARCHAR(255) DEFAULT=NULL]
+    contactCli      [VARCHAR(255) DEFAULT=NULL]
+    commentsCli     [VARCHAR(500) DEFAULT=NULL]
+    statusCli       [TINYINT(1) NOT NULL, DEFAULT=1]
+    codTypeCli      [SMALLINT(2) NOT NULL, UNSIGNED, FOREING KEY]
+
+[address_type]
+    codTypeAdd      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    addressType     [VARCHAR(255) NOT NULL]
+
+[address_country]
+    codCountryAdd   [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    country         [VARCHAR(255) NOT NULL]
+
+[address_province]
+    codProvinceAdd  [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    province        [VARCHAR(255) NOT NULL]
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+
+[address_state]
+    codStateAdd     [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    state           [VARCHAR(255) NOT NULL]
+    codProvinceAdd  [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+
+[client_address]
+    codAddressCli   [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codTypeAdd      [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    address         [VARCHAR(255) NOT NULL]
+    numberAdd       [SMALLINT(5) UNSIGNED, DEFAULT=0]
+    codStateAdd     [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codProvinceAdd  [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    zipCode         [INT(8) UNSIGNED, DEFAULT=0]
+
+[phone_prefix]
+    codPrefixPhone  [SMALLINT(3) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]    
+    codCountryAdd   [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    prefixPhone     [SMALLINT(3), NOT NULL, UNSIGNED, UNIQUE]
+
+[client_phone]
+    codPhoneCli     [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codPrefixPhone  [SMALLINT(3) NOT NULL, UNSIGNED, FOREING KEY]
+    phone           [INT(13) NOT NULL, UNSIGNED]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO EMPLEADOS - MODULE EMPLOYEES ##
+
+[employed]
+    codEmployed     [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nifEmp          [VARCHAR(20) NOT NULL]
+    nameEmp         [VARCHAR(255) NOT NULL]
+    emailEmp        [VARCHAR(255) DEFAULT=NULL]
+    contactEmp      [VARCHAR(255) DEFAULT=NULL]
+    commentsEmp     [VARCHAR(500) DEFAULT=NULL]
+    statusEmp       [TINYINT(1) NOT NULL, DEFAULT=1]
+    registEmp       [INT(8) UNSIGNED, NOT NULL, DEFAULT=0]
+    codTypeEmp      [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+
+[employed_type]
+    codTypeEmp      [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    employedType    [VARCHAR(255) NOT NULL] 
+
+[employed_profix]
+    codProfitEmp    [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codEmployed     [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    numRegist       [INT(4) NOT NULL, UNSIGNED, DEFAULT=0]
+    monthProfit     [SMALLINT(2) NOT NULL, UNSIGNED, DEFAULT=0]
+    yearProfit      [SMALLINT(4) NOT NULL, UNSIGNED, DEFAULT=0]
+    amountProfit    [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO COMPAÑIAS - MODULE COMPANIES ##
+
+[company]
+    codCompany      [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nameCom         [VARCHAR(255) NOT NULL]
+    statusCom       [TINYINT(1) NOT NULL, DEFAULT=1]
+    registCom       [INT(8) UNSIGNED, NOT NULL, DEFAULT=0]
+    totalProfitCom  [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+[company_branch]
+    codBranchCom    [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codCompany      [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    nameBranch      [VARCHAR(255) NOT NULL]
+    statusBranch    [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[company_profix]
+    codProfitCom    [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codCompany      [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    numRegist       [INT(8) NOT NULL, UNSIGNED]
+    monthProfit     [SMALLINT(2) NOT NULL, UNSIGNED]
+    yearProfit      [SMALLINT(4) NOT NULL, UNSIGNED]
+    amountProfit    [DECIMAL(10,2) NOT NULL, DEFAULT=0.00]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO FACTURACION - MODULE INVOICES ##
+
+[invoicing]
+    codInvoice      [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    numInvoice      [VARCHAR(255) UNIQUE, DEFAULT=NULL]
+    codEmployedInv  [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codOfficeInv    [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    dateInvoiceEmp  [DATE, NOT NULL]
+    statusInvoice   [TINYINT(1) NOT NULL, DEFAULT=0]
+
+[invoicing_office]
+    codOfficeInv    [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    feeOffice       [DECIMAL(10,2) DEFAULT=0.00]   
+    feeOffLocomot   [DECIMAL(10,2) DEFAULT=0.00]  
+    feeOffOthers    [DECIMAL(10,2) DEFAULT=0.00] 
+    feeOffIVA       [DECIMAL(10,2) DEFAULT=0.00]  
+    feeOffTotal     [DECIMAL(10,2) DEFAULT=0.00]  
+
+[invoicing_employed]
+    codEmployedInv  [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    feeEmployed     [DECIMAL(10,2) DEFAULT=0.00]   
+    feeEmpLocomot   [DECIMAL(10,2) DEFAULT=0.00]  
+    feeEmpOthers    [DECIMAL(10,2) DEFAULT=0.00] 
+    feeEmpSum       [DECIMAL(10,2) DEFAULT=0.00]  
+    feeEmpIVA       [DECIMAL(10,2) DEFAULT=0.00]  
+    feeEmpIRPF      [DECIMAL(10,2) DEFAULT=0.00]  
+    feeEmpTotal     [DECIMAL(10,2) DEFAULT=0.00]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO ACCIDENTES - MODULE ACCIDENTS ##
+
+[intervention_type]
+    codTypeInt      [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    descripTypeInt  [VARCHAR(255) NOT NULL]
+    statusTypeInt   [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[intervention]
+    codIntervention [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codEmployed     [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codTypeInt      [SMALLINT(2) NOT NULL, UNSIGNED, FOREING KEY]
+    codInvoice      [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    monthInvoice    [SMALLINT(2) UNSIGNED, DEFAULT=NULL]
+    yearInvoice     [SMALLINT(4) UNSIGNED, DEFAULT=NULL]
+    statusInter     [TINYINT(1) NOT NULL, DEFAULT=0]
+
+[accident_type]
+    codTypeAcc      [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    descripTypeAcc  [VARCHAR(255) NOT NULL]
+    statusTypeAcc   [TINYINT(1) NOT NULL, DEFAULT=1]
+
+[accident]
+    codAccident     [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codClient       [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codCompany      [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codBranchCom    [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codTypeAcc      [SMALLINT(2) NOT NULL, UNSIGNED, FOREING KEY]
+    numPolicy       [VARCHAR(100) NOT NULL]
+    dateAccident    [DATE, DEFAULT=NULL]
+    descriptionAcc  [VARCHAR(3000), DEFAULT=NULL]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO REGISTROS - MODULE REGISTER ##
+
+[regist]
+    codRegist       [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    typeRegist      [TINYINT(1) NOT NULL, UNSIGNED, DEFAULT=1]
+    dateOpened      [DATE, NOT NULL]
+    statusReg       [TINYINT(1) NOT NULL, UNSIGNED, DEFAULT=1]
+    referenceReg    [VARCHAR(255) NOT NULL]
+    codAccident     [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codIntervention [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    notesRegist     [VARCHAR(3000), DEFAULT=NULL]
+    contactRegist   [VARCHAR(255), DEFAULT=NULL]
+    numReOpened     [SMALLINT(2) NOT NULL, UNSIGNED, DEFAULT=0]
+    dateClosed      [DATE, NOT NULL]
+    codUser         [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+
+[regist_reopened]
+    codReOpenedReg  [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codRegist       [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+    codReOpened     [INT(8) NOT NULL, UNSIGNED, FOREING KEY]
+
+#|-----------------------------------------------------------------------------------|#
+
+## MODULO USUARIOS - MODULE USER ##
+
+[user]
+    codUser         [SMALLINT(4) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    nameUser        [VARCHAR(255) UNIQUE, NOT NULL]
+    passUser        [VARCHAR(255) NOT NULL]
+    statusUser      [TINYINT(1) NOT NULL, DEFAULT=1]
+    typeUser        [TINYINT(1) NOT NULL, DEFAULT=0]
+
+[action]
+    codAction       [SMALLINT(2) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    action          [VARCHAR(255) NOT NULL]    
+
+[history]
+    codHistory      [INT(8) PRIMARY KEY, NOT NULL, UNIQUE, UNSIGNED, AUTOINCREMENT]
+    codUser         [SMALLINT(4) NOT NULL, UNSIGNED, FOREING KEY]
+    codAction       [SMALLINT(2) NOT NULL, UNSIGNED, FOREING KEY]
+    dateHistory     [DATE, NOT NULL]
