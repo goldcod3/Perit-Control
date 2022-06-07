@@ -1,0 +1,128 @@
+#|-----------------------------------------------------------------------------------|#
+
+## ESTRUCTURA DE LA BASE DE DATOS -- [PeritControl]
+## STRUCTURE OF THE DATABASE -- [PeritControl]
+
+Name: db021.v00pcontrol-db.sql
+Description: Custom designed database for a company focused on accident management.
+
+#|-----------------------------------------------------------------------------------|#
+
+## TABLAS - TABLES
+
+#|-----------------------------------------------------------------------------------|#
+
+[asegurado]
+    codAsegurado        [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    nombreAseg          [VARCHAR(400) NOT NULL]
+    direccionRiesgo     [VARCHAR(400) NOT NULL]
+    direccionContacto   [VARCHAR(400) DEFAULT=NULL]
+    contactoAseg        [VARCHAR(400) DEFAULT=NULL]
+
+[compania]
+    codCompania         [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    nombreCom           [VARCHAR(150) NOT NULL]
+    estadoCom           [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[factura]
+    codFactura          [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    numFactura          [VARCHAR(150) DEFAULT=NULL]
+    codHGabinete        [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codHPerito          [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    estadoPagoFac       [ENUM('PAGO', IMPAGO) NOT NULL, DEFAULT='IMPAGO']
+    mesFacPerito        [SMALLINT() DEFAULT=NULL]
+    anoFacPerito        [SMALLINT() DEFAULT=NULL]
+
+[hgabinete]
+    codHGabinete        [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    honorarioGab        [DECIMAL(10,2) DEFAULT=0.00]
+    locomocionGab       [DECIMAL(10,2) DEFAULT=0.00]
+    variosGab           [DECIMAL(10,2) DEFAULT=0.00]
+    sumaGab             [DECIMAL(10,2) DEFAULT=0.00]
+    ivaGab              [DECIMAL(10,2) DEFAULT=0.00]
+    totalGab            [DECIMAL(10,2) DEFAULT=0.00]
+
+[hperito]
+    codHPerito          [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    honorarioPer        [DECIMAL(10,2) DEFAULT=0.00]
+    locomocionPer       [DECIMAL(10,2) DEFAULT=0.00]
+    ajustesPer          [DECIMAL(10,2) DEFAULT=0.00]
+    sumaPer             [DECIMAL(10,2) DEFAULT=0.00]
+    ivaPer              [DECIMAL(10,2) DEFAULT=0.00]
+    irpfPer             [DECIMAL(10,2) DEFAULT=0.00]
+    totalPer            [DECIMAL(10,2) DEFAULT=0.00]
+
+[perito]
+    codPerito           [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    nombrePer           [VARCHAR(150) NOT NULL]
+    nifPer              [VARCHAR(9) DEFAULT=NULL]
+    direccionPer        [VARCHAR(300) DEFAULT=NULL]
+    telefonoPer         [INT() DEFAULT=NULL]
+    emailPer            [VARCHAR(255) DEFAULT=NULL]
+    estadoPer           [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[ramo]
+    codRamo             [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    descripcionRamo     [VARCHAR(150) NOT NULL]
+    codCompania         [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    estadoRam           [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[siniestro]
+    codSiniestro        [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    codAsegurado        [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codCompania         [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codRamo             [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codTipoSin          [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    numPoliza           [VARCHAR(100) NOT NULL]
+
+[telefono]
+    codTelefono         [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    telefonoAseg        [INT() NOT NULL]
+    codAsegurado        [INT() NOT NULL, UNSIGNED, FOREING KEY]
+
+[tipointervencion]
+    codTipoInt          [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    descripTipoInt      [VARCHAR(150) NOT NULL]
+    estadoTipoInt       [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[tiporeapertura]
+    codTipoReapertura   [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    tipoReapertura      [VARCHAR(150) NOT NULL]
+    estadoTipoReap      [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[tiposiniestro]
+    codTipoSin          [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    descripTSiniestro   [VARCHAR(150) NOT NULL]
+    estadoTSin          [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+
+[usuario]
+    codUsuario          [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    nombreUsr           [VARCHAR(100) NOT NULL]
+    passUsr             [VARCHAR(100) NOT NULL]
+    estadoUsr           [ENUM('ACTIVO', 'INACTIVO') NOT NULL, DEFAULT='ACTIVO']
+    tipoUsr             [ENUM('ADMIN', 'COMUN') NOT NULL, DEFAULT='COMUN']
+
+[reapertura]
+    codReapertura       [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    codRegistroAsociado [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codReaperturareg    [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    codTipoReapertura   [INT() NOT NULL, UNSIGNED, FOREING KEY]
+
+[registro]
+    codRegistro         [INT() PRIMARY KEY, NOT NULL, UNSIGNED, AUTOINCREMENT]
+    codPerito           [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    fechaApertura       [DATE NOT NULL]
+    referenciaCia       [VARCHAR(500) NOT NULL]
+    codSiniestro        [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    descripcionReg      [VARCHAR(3000) DEFAULT=NULL]
+    fechaEntregaPer     [DATE DEFAULT=NULL]
+    estadoEntrega       [ENUM('PENDIENTE', 'ENTREGADO') NOT NULL, DEFAULT='PENDIENTE']
+    estadoReg           [VARCHAR(45) NOT NULL, DEFAULT='ABIERTO']
+    codFactura          [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    fechaCierre         [DATE DEFAULT=NULL]
+    observaciones       [VARCHAR(3000) DEFAULT=NULL]
+    codUsuario          [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    numeroREaperturas   [SMALLINT() NOT NULL, DEFAULT=0]
+    tipoRegistro        [VARCHAR(10) NOT NULL, DEFAULT='REGISTRO']
+    tipoInt             [INT() NOT NULL, UNSIGNED, FOREING KEY]
+    contactoReg         [VARCHAR(3000) DEFAULT=NULL]

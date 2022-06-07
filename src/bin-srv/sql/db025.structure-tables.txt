@@ -3,7 +3,7 @@
 ## ESTRUCTURA DE LA BASE DE DATOS -- [PeritControl]
 ## STRUCTURE OF THE DATABASE -- [PeritControl]
 
-Name: db025_pc_accident_mod01.sql
+Name: db025.v00pcontrol-db.sql
 Description: Custom designed database for a company focused on accident management.
 
 #|-----------------------------------------------------------------------------------|#

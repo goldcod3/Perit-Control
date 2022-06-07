@@ -1,0 +1,497 @@
+#|-----------------------------------------------------------------------------------|#
+
+## ESTRUCTURA DE LAS FUNCIONES Y LOS PROCEDIMIENTOS -- [PeritControl]
+## STRUCTURE OF FUNCTIONS AND PROCEDURES -- [PeritControl]
+
+Name: db021_pc_accident_mod00.sql
+Description: Custom designed database for a company focused on accident management.
+
+#|-----------------------------------------------------------------------------------|#
+
+## FUNCTIONS - FUNCIONES
+
+#|-----------------------------------------------------------------------------------|#
+## addNewRegistro
+
+CREATE FUNCTION `addNewRegistro`(
+    param_nomAseg VARCHAR(150), param_dirRiesgA VARCHAR(400), 
+    param_dirContA VARCHAR(400), param_contactoA VARCHAR(150),
+    param_companiaS INT, param_ramoS INT, param_tipoS SMALLINT, 
+    param_polizaS VARCHAR(45), param_numeroF VARCHAR(45), 
+    param_mesF SMALLINT, param_anoF SMALLINT, param_perito INT, 
+    param_fechaA DATE, param_referencia VARCHAR(45), param_descripS VARCHAR(3000), 
+    param_observ VARCHAR(600), param_usuario INT) RETURNS int
+    DETERMINISTIC
+BEGIN
+	DECLARE codAseg, codSin, codFac, codReg INT;
+	CALL addAsegurado(param_nomAseg, param_dirRiesgA, param_dirContA, param_contactoA);
+	SET codAseg = last_insert_id();
+	CALL newSiniestro(codAseg, param_companiaS, param_ramoS, param_tipoS, param_polizaS);
+	SET codSin = last_insert_id();
+	CALL newFactura(param_numeroF, param_mesF, param_anoF);
+	SET codFac = last_insert_id();
+	INSERT INTO registro (codPerito, fechaApertura, referenciaCia, codAsegCom, descripcionReg, 
+            codFactura, observaciones, codUsuario, tipoRegistro) 
+	VALUES (param_perito, param_fechaA, param_referencia, codSin, param_descripS, codFac, 
+            param_observ, param_usuario, 'REGISTRO');
+	SET codReg = last_insert_id();
+RETURN codReg;
+END
+
+#|-----------------------------------------------------------------------------------|#
+
+## PROCEDURES - PROCEDIMIENTOS
+
+#|-----------------------------------------------------------------------------------|#
+## addAsegurado
+
+CREATE PROCEDURE `addAsegurado`(
+    IN param_nombre VARCHAR(150), IN param_direccionR VARCHAR(400), 
+    IN param_dirreccionC VARCHAR(400), IN param_contacto VARCHAR(400), 
+    OUT result INT)
+BEGIN
+	INSERT INTO asegurado (nombreAseg, direccionRiesgo, direccionContacto, contactoAseg)
+		VALUES (param_nombre, param_direccionR, param_dirreccionC, param_contacto);
+    SELECT MAX(codAsegurado) INTO result FROM asegurado;  
+    SELECT result;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addCompania
+
+CREATE PROCEDURE `addCompania`(
+    IN param_nombre VARCHAR(150), OUT result INT)
+BEGIN
+	IF NOT EXISTS (SELECT nombreCom FROM compania WHERE nombreCom=param_nombre) THEN
+		INSERT INTO compania (nombreCom) VALUES (param_nombre);
+		SET result = last_insert_id();
+    ELSE
+		SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addPerito
+
+CREATE PROCEDURE `addPerito`(
+    IN param_nombre VARCHAR(150), IN param_nif VARCHAR(9), 
+    IN param_direccion VARCHAR(300), IN param_telefono INT, 
+    IN param_email VARCHAR(255), OUT result INT)
+BEGIN
+	
+	IF NOT EXISTS (SELECT codPerito FROM perito WHERE nombrePer=param_nombre) THEN
+	        INSERT INTO perito (nombrePer, nifPer, direccionPer, telefonoPer, emailPer)
+		    VALUES (param_nombre, param_nif, param_direccion, param_telefono, param_email);
+    SET result = last_insert_id();       
+	ELSE
+	SET result = 0;
+END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addRamoCompania
+
+CREATE PROCEDURE `addRamoCompania`(
+    IN param_descrip VARCHAR(150), IN param_compania INT, OUT result INT)
+BEGIN
+	
+    IF EXISTS (SELECT codCompania FROM compania WHERE codCompania=param_compania) THEN
+		
+		IF NOT EXISTS (SELECT codRamo FROM ramo WHERE codCompania=param_compania 
+                        AND descripcionRam=param_descrip) THEN
+			INSERT INTO ramo (descripcionRam, codCompania) 
+            VALUES (param_descrip, param_compania);
+			SET result = last_insert_id();
+        ELSE
+			SET result = 0;
+        END IF;
+    ELSE
+		SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addReapertura
+
+CREATE PROCEDURE `addReapertura`(
+    IN param_registroAsoc INT, IN param_reapertura INT, 
+    IN param_tipoReap INT, OUT reapertura INT)
+BEGIN
+    IF EXISTS (SELECT codRegistro FROM registro WHERE codRegistro=param_registroAsoc) THEN
+		INSERT INTO reapertura (codRegistroAsociado, codReaperturaReg, codTipoReapertura)
+		VALUES (param_registroAsoc, param_reapertura, param_tipoReap);
+        SET reapertura = last_insert_id();
+        UPDATE registro SET numeroReaperturas=(numeroReaperturas+1) 
+        WHERE codRegistro=param_registroAsoc;
+    ELSE    
+		SET reapertura = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addRegistro
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `addRegistro`(
+    IN param_nomAseg VARCHAR(150), IN param_dirRiesgA VARCHAR(400), 
+    IN param_dirContA VARCHAR(400), IN param_contactoA VARCHAR(150),
+    IN param_companiaS INT, IN param_ramoS INT, IN param_tipoS SMALLINT, 
+    IN param_polizaS VARCHAR(45), IN param_numeroF VARCHAR(45), 
+    IN param_mesF SMALLINT, IN param_anoF SMALLINT,
+    IN param_perito INT, IN param_fechaA DATE, IN param_referencia VARCHAR(45), 
+    IN param_descripS VARCHAR(3000), IN param_observ VARCHAR(600), IN param_usuario INT, 
+    IN param_tipoInt INT, IN param_cont VARCHAR(150), IN param_tipoReg VARCHAR(10), 
+    OUT registro INT)
+BEGIN
+	DECLARE codAseg, codSin, codFac INT;
+	CALL addAsegurado(param_nomAseg, param_dirRiesgA, param_dirContA, 
+                        param_contactoA, codAseg);
+	CALL newSiniestro(codAseg, param_companiaS, param_ramoS, param_tipoS, 
+                        param_polizaS, codSin);
+	CALL newFactura(param_numeroF, param_mesF, param_anoF);
+	SELECT MAX(codFactura) INTO codFac FROM factura;
+	INSERT INTO registro (codPerito, fechaApertura, referenciaCia, codAsegCom, 
+                        descripcionReg, codFactura, observaciones, codUsuario, 
+                        tipoRegistro, tipoInt, contactoReg) 
+	VALUES (param_perito, param_fechaA, param_referencia, codSin, param_descripS, 
+                        codFac, param_observ, param_usuario, param_tipoReg, 
+                        param_tipoInt, param_cont);
+	SET registro = (last_insert_id());
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addTelefonoAsegurado
+
+CREATE PROCEDURE `addTelefonoAsegurado`(
+    IN param_telefono INT, IN param_codAseg INT, INOUT result INT)
+BEGIN
+	
+    IF EXISTS (SELECT codAsegurado FROM asegurado WHERE codAsegurado=param_codAseg) THEN
+		INSERT INTO telefono (telefonoAseg, codAsegurado)
+		   VALUES (param_telefono, param_codAseg);
+		SET result = last_insert_id();
+    ELSE
+    SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addTipoIntervencion
+
+CREATE PROCEDURE `addTipoIntervencion`(
+    IN param_descrip VARCHAR(150), OUT result INT)
+BEGIN
+	IF NOT EXISTS (SELECT codTipoInt FROM tipointervencion 
+                        WHERE descripTipoInt = param_descrip) THEN
+		INSERT INTO tipointervencion (descripTipoInt) VALUES (param_descrip);
+        SET result = last_insert_id();
+	ELSE
+		SET result = 0;
+    END IF;    
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addTipoReapertura
+
+CREATE PROCEDURE `addTipoReapertura`(
+    IN param_descrip VARCHAR(150), OUT result INT)
+BEGIN
+	IF NOT EXISTS (SELECT codTipoReapertura FROM tiporeapertura 
+                        WHERE tipoReapertura = param_descrip) THEN
+		INSERT INTO tiporeapertura (tipoReapertura) VALUES (param_descrip);
+        SET result = last_insert_id();
+	ELSE 
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addTipoSiniestro
+
+CREATE PROCEDURE `addTipoSiniestro`(
+    IN param_descrip VARCHAR(150), OUT result INT)
+BEGIN
+	IF NOT EXISTS (SELECT codTipoSin FROM tiposiniestro 
+                        WHERE descripTSiniestro=param_descrip) THEN
+		INSERT INTO tiposiniestro (descripTSiniestro) VALUES (param_descrip);
+        SET result = last_insert_id();
+	ELSE
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addUsuario
+
+CREATE PROCEDURE `addUsuario`(
+    IN param_nombre VARCHAR(100), IN param_pass VARCHAR(100), 
+    IN param_tipo VARCHAR(10), OUT result INT)
+BEGIN
+	IF NOT EXISTS (SELECT codUsuario FROM usuario WHERE nombreUsr = param_nombre) THEN
+		INSERT INTO usuario (nombreUsr, passUsr, tipoUsr) 
+        VALUES (param_nombre, param_pass, param_tipo);
+        SET result = last_insert_id();
+	ELSE
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addFactura
+
+CREATE PROCEDURE `addFactura`(
+    IN param_numero VARCHAR(45), IN param_mesP SMALLINT, IN param_anoP SMALLINT)
+BEGIN
+DECLARE codHG, codHP INT;
+	INSERT INTO hgabinete (honorarioGab) VALUES (0);
+	SET codHG = last_insert_id();
+	INSERT INTO hperito (honorarioPer) VALUES (0);
+	SET codHP = last_insert_id();
+	INSERT INTO factura (numFactura, codHGabinete, codHPerito, mesFacPerito, anoFacPerito)
+	VALUES (param_numero, codHG, codHP, param_mesP, param_anoP);	
+END
+
+#|-----------------------------------------------------------------------------------|#
+## addSiniestro
+
+CREATE PROCEDURE `addSiniestro`(
+    IN param_asegurado INT, IN param_compania INT, IN param_ramo INT,
+    IN param_tipo INT, IN param_poliza VARCHAR(45), OUT result INT)
+BEGIN
+	INSERT INTO siniestro (codAsegurado, codCompania, codRamo, codTipoSin, numPoliza)
+	VALUES (param_asegurado, param_compania, param_ramo, param_tipo, param_poliza);
+    SELECT MAX(codSiniestro) INTO result FROM siniestro;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateCierreRegistro
+
+CREATE PROCEDURE `updateCierreRegistro`(
+    IN param_codRegistro INT, IN param_fecha DATE, 
+    IN param_usuario INT, OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codRegistro FROM registro WHERE codRegistro = param_codRegistro) THEN 
+		UPDATE registro SET fechaCierre = param_fecha WHERE codRegistro = param_codRegistro;
+        UPDATE registro SET estadoReg = 'CERRADO' WHERE codRegistro = param_codRegistro;
+        UPDATE registro SET codUsuario = param_usuario WHERE codRegistro = param_codRegistro;
+        SET result = param_codRegistro;
+	ELSE
+    SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateCompania
+
+CREATE PROCEDURE `updateCompania`(
+    IN param_codCom INT, IN param_nombreCom VARCHAR(150), 
+    IN param_estadoCom VARCHAR(10), OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codCompania FROM compania WHERE codCompania=param_codCom) THEN
+		UPDATE compania SET nombreCom=param_nombreCom, estadoCom=param_estadoCom 
+        WHERE codCompania=param_codCom;
+        SET result = param_codCom;
+    ELSE
+		SET result = 0;
+    END IF;    
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateEntregaPerito
+
+CREATE PROCEDURE `updateEntregaPerito`(
+    IN param_codReg INT, IN param_codFact INT, IN param_fecha DATE, 
+    IN param_mes INT, IN param_ano INT, OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codRegistro FROM registro WHERE codRegistro = param_codReg) THEN
+		UPDATE factura SET mesFacPerito = param_mes WHERE codFactura = param_codFact;
+		UPDATE factura SET anoFacPerito = param_ano WHERE codFactura = param_codFact;
+		UPDATE registro SET fechaEntregaPer = param_fecha WHERE codRegistro = param_codReg;
+		UPDATE registro SET estadoEntrega = 'ENTREGADO' WHERE codRegistro = param_codReg;
+		SET result = 1;	
+     ELSE
+     SET result = 0;
+     END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updatePerito
+
+CREATE PROCEDURE `updatePerito`(
+    IN param_codigo INT, IN param_nombre VARCHAR(150), IN param_nif VARCHAR(9), 
+    IN param_direccion VARCHAR(300),  IN param_telf INT, IN param_email VARCHAR(255), 
+    IN param_estado VARCHAR(10), OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codPerito FROM perito WHERE codPerito = param_codigo) THEN
+    UPDATE perito
+    SET nombrePer = param_nombre, nifPer = param_nif, direccionPer = param_direccion, 
+    telefonoPer = param_telf, emailPer = param_email, 
+    estadoPer = param_estado WHERE codPerito = param_codigo;
+    SET result = 1;
+    ELSE
+    SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateRamoCompania
+
+CREATE PROCEDURE `updateRamoCompania`(
+    IN param_codRamo INT, IN param_nombreRam VARCHAR(150), 
+    IN param_estadoRam VARCHAR(10), OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codRamo FROM ramo WHERE codRamo=param_codRamo) THEN
+		UPDATE ramo SET descripcionRam = param_nombreRam, 
+        estadoRam = param_estadoRam WHERE codRamo=param_codRamo;
+        SET result = param_codRamo;
+	ELSE
+		SET result = 0;
+    END IF;    
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateRowRegistro
+
+CREATE PROCEDURE `updateRowRegistro`(
+    IN param_codReg INT, IN param_codPer INT, IN param_codCom INT, IN param_codRamo INT, 
+    IN param_refCia VARCHAR(45), IN param_contR VARCHAR(150), IN param_codSin INT, 
+    IN param_numPol VARCHAR(45), IN param_tipoSin INT, IN param_tipoInt INT, 
+    IN param_codAseg INT , IN param_nomAseg VARCHAR(150), IN param_dirCont VARCHAR(400), 
+    IN param_dirRiesg VARCHAR(400), IN param_contS VARCHAR(150), IN param_descrip VARCHAR(3000),
+    IN param_codFac INT, IN param_numFac VARCHAR(45), IN param_estPago  VARCHAR(10), 
+    IN param_HGab DOUBLE, IN param_LGab DOUBLE, IN param_VGab DOUBLE, IN param_SGab DOUBLE, 
+    IN param_IvGab DOUBLE, IN param_TGab DOUBLE, IN param_HPer DOUBLE, IN param_LPer DOUBLE,
+    IN param_APer DOUBLE, IN param_SPer DOUBLE, IN param_IvPer DOUBLE, IN param_IrPer DOUBLE, 
+    IN param_TPer DOUBLE, IN param_Obv VARCHAR(600), IN param_codHG INT, IN param_codHP INT, 
+    IN param_mesP INT, IN param_anoP INT,  OUT result INT)
+BEGIN
+DECLARE codHG INT;
+DECLARE codHP INT;	
+IF EXISTS (SELECT codRegistro FROM registro WHERE codRegistro=param_codReg) THEN
+        
+        UPDATE registro,  asegurado
+		SET registro.codPerito=param_codPer, registro.referenciaCia=param_refCia, 
+        registro.contactoReg=param_contR, registro.tipoInt=param_tipoInt, 
+        registro.descripcionReg=param_descrip, registro.observaciones=param_Obv
+        WHERE codRegistro=param_codReg;
+        UPDATE siniestro
+        SET siniestro.codCompania=param_codCom, siniestro.codRamo=param_codRamo, 
+        siniestro.numPoliza=param_numPol, siniestro.codTipoSin=param_tipoSin
+        WHERE codSiniestro=param_codSin;
+        UPDATE asegurado
+        SET asegurado.nombreAseg=param_nomAseg, asegurado.direccionRiesgo=param_dirRiesg, 
+        asegurado.direccionContacto=param_dirCont, asegurado.contactoAseg=param_contS
+		WHERE codAsegurado=param_codAseg;
+		UPDATE factura
+        SET numFactura=param_numFac, estadoPagoFac=param_estPago, mesFacPerito=param_mesP, 
+        anoFacPerito=param_anoP
+        WHERE codFactura=param_codFac;
+        UPDATE hgabinete 
+        SET honorarioGab=param_HGab, locomocionGab=param_LGab, variosGab=param_VGab, 
+        sumaGab=param_SGab, ivaGab=param_IvGab, totalGab=param_TGab
+        WHERE codHGabinete=param_codHG;
+        UPDATE hperito 
+        SET honorarioPer=param_HPer, locomocionPer=param_LPer, ajustesPer=param_APer, 
+        sumaPer=param_SPer, ivaPer=param_IvPer, irpfPer=param_IrPer, totalPer=param_TPer
+        WHERE codHPerito=param_codHP;
+		SET result=1;
+    ELSE
+    SET result=0;
+    END IF;
+	
+
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateTelefonoAsegurado
+
+CREATE PROCEDURE `updateTelefonoAsegurado`(
+    IN param_codTelefono INT, IN param_telefono INT, OUT result INT)
+BEGIN
+	UPDATE telefono SET telefonoAseg = param_telefono WHERE codTelefono = param_codTelefono;
+	IF EXISTS (SELECT codTelefono FROM telefono 
+            WHERE codTelefono = param_codTelefono AND telefonoAseg = param_telefono) THEN
+		SET result = param_codTelefono;
+	ELSE
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateTipoIntervencion
+
+CREATE PROCEDURE `updateTipoIntervencion`(
+    IN param_codigo INT, IN param_tipoInt VARCHAR(150), IN param_estado VARCHAR(10), 
+    OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codTipoInt FROM tipointervencion WHERE codTipoInt = param_codigo) THEN
+		UPDATE tipointervencion SET descripTipoInt = param_tipoInt, 
+        estadoTipoInt = param_estado WHERE codTipoInt = param_codigo;
+        SET result = param_codigo;
+	ELSE
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateTipoReapertura
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateTipoReapertura`(
+    IN param_codigo INT, IN param_tipoReap VARCHAR(150), IN param_estado VARCHAR(10), 
+    OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codTipoReapertura FROM tiporeapertura 
+            WHERE codTipoReapertura = param_codigo) THEN
+		UPDATE tiporeapertura SET tipoReapertura = param_tipoReap, 
+        estadoTipoReap = param_estado WHERE codTipoReapertura = param_codigo;
+        SET result = param_codigo;
+	ELSE
+		SET result = 0;
+	END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateTipoSiniestro
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateTipoSiniestro`(
+    IN param_codTipoSin INT, IN param_descrip VARCHAR(150), 
+    IN param_estado VARCHAR(10), OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codTipoSin FROM tiposiniestro WHERE codTipoSin=param_codTipoSin) THEN
+		UPDATE tiposiniestro SET descripTSiniestro = param_descrip, 
+        estadoTSin = param_estado WHERE codTipoSin=param_codTipoSin;
+        SET result = param_codTipoSin;
+	ELSE
+		SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
+## updateUsuario
+
+CREATE PROCEDURE `updateUsuario`(
+    IN param_codigo INT, IN param_nombre VARCHAR(100), IN param_pass VARCHAR(100), 
+    IN param_estado VARCHAR(10), IN param_tipo VARCHAR(10), OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codUsuario FROM usuario WHERE codUsuario = param_codigo) THEN
+		UPDATE usuario SET nombreUsr = param_nombre, passUsr = param_pass, 
+        estadoUsr = param_estado, tipoUsr = param_tipo WHERE codUsuario = param_codigo;
+        SET result = param_codigo;
+	ELSE
+		SET result = 0;
+    END IF;    
+END
+
+#|-----------------------------------------------------------------------------------|#
+## deleteTelefonoAsegurado
+
+CREATE PROCEDURE `deleteTelefonoAsegurado`(IN param_codTelf INT, OUT result INT)
+BEGIN
+	IF EXISTS (SELECT codTelefono FROM telefono WHERE codTelefono = param_codTelf) THEN
+		DELETE FROM telefono WHERE codTelefono = param_codTelf;
+        SET result = 1;
+	ELSE
+    SET result = 0;
+    END IF;
+END
+
+#|-----------------------------------------------------------------------------------|#
